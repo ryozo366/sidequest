@@ -83,9 +83,11 @@ function renderQuests(quests) {
     const article = card.querySelector('.quest-card');
     if (quest.status !== 'open') article.classList.add('accepted');
 
-    card.querySelector('.category-badge').textContent = quest.category;
+    const badge = card.querySelector('.category-badge');
+    badge.textContent = quest.category;
+    badge.dataset.cat = quest.category;
     card.querySelector('.distance-badge').textContent =
-      quest.distanceKm != null ? `📍 ${quest.distanceKm} km away` : '';
+      quest.distanceKm != null ? `${quest.distanceKm} km away` : '';
     card.querySelector('.quest-title').textContent = quest.title;
     card.querySelector('.quest-desc').textContent = quest.description;
     card.querySelector('.quest-pay').textContent = formatPay(quest.pay);
@@ -109,8 +111,8 @@ function renderQuests(quests) {
   $('#empty-state').classList.toggle('hidden', quests.length > 0);
 
   const radiusText = state.radius === 'all' ? 'any distance' : `${state.radius} km`;
-  $('#result-summary').innerHTML =
-    `<strong>${quests.length}</strong> sidequest${quests.length === 1 ? '' : 's'} within <strong>${radiusText}</strong> of you`;
+  $('#result-summary').textContent =
+    `${quests.length} sidequest${quests.length === 1 ? '' : 's'} within ${radiusText}`;
 }
 
 async function refresh() {
@@ -168,10 +170,10 @@ function useGeolocation(onCoords, button) {
 // ---- Wire up controls ----
 
 $('#radius-chips').addEventListener('click', (e) => {
-  const chip = e.target.closest('.chip');
+  const chip = e.target.closest('.seg');
   if (!chip) return;
-  document.querySelectorAll('#radius-chips .chip').forEach((c) => c.classList.remove('chip-active'));
-  chip.classList.add('chip-active');
+  document.querySelectorAll('#radius-chips .seg').forEach((c) => c.classList.remove('seg-active'));
+  chip.classList.add('seg-active');
   state.radius = chip.dataset.radius;
   refresh();
 });

@@ -3,178 +3,203 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sidequest — local quests, real rewards</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>" />
+  <title>Sidequest</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23007AFF'/%3E%3Cpath d='M35.5 12 20 36h10l-2.5 16L44 27H34l1.5-15z' fill='%23fff'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <span class="brand-icon">⚔️</span>
-        <div>
+  <div class="app">
+
+    <header class="header">
+      <div class="header-row">
+        <div class="brand">
+          <span class="app-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="34" height="34"><rect width="64" height="64" rx="14" fill="url(#g)"/><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3395FF"/><stop offset="1" stop-color="#007AFF"/></linearGradient></defs><path d="M35.5 12 20 36h10l-2.5 16L44 27H34l1.5-15z" fill="#fff"/></svg>
+          </span>
           <h1>Sidequest</h1>
-          <p class="tagline">Local quests. Real rewards.</p>
         </div>
+        <button id="open-post-modal" class="icon-btn" aria-label="Post a sidequest">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
       </div>
-      <button id="open-post-modal" class="btn btn-primary">+ Post a sidequest</button>
-    </div>
-  </header>
+      <p class="subtitle">Small paid tasks near you</p>
+    </header>
 
-  <main class="container">
-    <section class="controls" aria-label="Filters">
-      <div class="control-group location-group">
-        <span class="control-label">Your location</span>
+    <main class="content">
+
+      <section class="panel" aria-label="Filters">
         <div class="location-row">
-          <button id="use-my-location" class="btn btn-ghost" title="Use browser geolocation">📍 Use my location</button>
-          <span id="location-display" class="location-display"></span>
-          <button id="edit-location" class="btn btn-ghost btn-small">Change</button>
+          <div class="location-info">
+            <span class="location-label">Near</span>
+            <span id="location-display" class="location-value"></span>
+          </div>
+          <div class="location-actions">
+            <button id="use-my-location" class="text-btn">Use my location</button>
+            <span class="dot-sep" aria-hidden="true">·</span>
+            <button id="edit-location" class="text-btn">Edit</button>
+          </div>
         </div>
+
         <div id="location-editor" class="location-editor hidden">
-          <input id="loc-lat" type="number" step="any" min="-90" max="90" placeholder="Latitude" />
-          <input id="loc-lng" type="number" step="any" min="-180" max="180" placeholder="Longitude" />
-          <input id="loc-name" type="text" maxlength="60" placeholder="Label (e.g. Home)" />
-          <button id="save-location" class="btn btn-small btn-primary">Save</button>
+          <div class="editor-fields">
+            <input id="loc-lat" type="number" step="any" min="-90" max="90" placeholder="Latitude" inputmode="decimal" />
+            <input id="loc-lng" type="number" step="any" min="-180" max="180" placeholder="Longitude" inputmode="decimal" />
+            <input id="loc-name" type="text" maxlength="60" placeholder="Label" />
+          </div>
+          <button id="save-location" class="text-btn text-btn-bold">Save</button>
         </div>
-      </div>
 
-      <div class="control-group">
-        <span class="control-label">Search radius</span>
-        <div id="radius-chips" class="chips" role="radiogroup" aria-label="Search radius">
-          <button class="chip" data-radius="1">1 km</button>
-          <button class="chip" data-radius="5">5 km</button>
-          <button class="chip chip-active" data-radius="10">10 km</button>
-          <button class="chip" data-radius="25">25 km</button>
-          <button class="chip" data-radius="50">50 km</button>
-          <button class="chip" data-radius="all">Any distance</button>
+        <div id="radius-chips" class="segmented" role="radiogroup" aria-label="Search radius">
+          <button class="seg" data-radius="1">1 km</button>
+          <button class="seg" data-radius="5">5 km</button>
+          <button class="seg seg-active" data-radius="10">10 km</button>
+          <button class="seg" data-radius="25">25 km</button>
+          <button class="seg" data-radius="50">50 km</button>
+          <button class="seg" data-radius="all">Any</button>
         </div>
+
+        <div class="filter-row">
+          <div class="select-wrap">
+            <select id="category-filter" aria-label="Category">
+              <option value="all">All categories</option>
+              <option>Garden</option>
+              <option>Pets</option>
+              <option>Moving</option>
+              <option>Errands</option>
+              <option>Repairs</option>
+              <option>Tech</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="select-wrap">
+            <select id="sort-select" aria-label="Sort by">
+              <option value="distance">Nearest first</option>
+              <option value="pay">Best pay</option>
+              <option value="newest">Newest</option>
+            </select>
+          </div>
+          <label class="switch-row">
+            <span class="switch-label">Taken</span>
+            <span class="switch">
+              <input type="checkbox" id="show-accepted" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <p id="result-summary" class="result-summary" role="status"></p>
+
+      <section id="quest-list" class="quest-list" aria-live="polite"></section>
+
+      <div id="empty-state" class="empty-state hidden">
+        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <p class="empty-title">No sidequests in range</p>
+        <p class="empty-hint">Try a wider radius, or post the first quest in your area.</p>
       </div>
 
-      <div class="control-group control-row">
-        <label class="inline-field">
-          <span class="control-label">Category</span>
-          <select id="category-filter">
-            <option value="all">All categories</option>
-            <option>Garden</option>
-            <option>Pets</option>
-            <option>Moving</option>
-            <option>Errands</option>
-            <option>Repairs</option>
-            <option>Tech</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label class="inline-field">
-          <span class="control-label">Sort by</span>
-          <select id="sort-select">
-            <option value="distance">Nearest first</option>
-            <option value="pay">Best pay</option>
-            <option value="newest">Newest</option>
-          </select>
-        </label>
-        <label class="inline-field checkbox-field">
-          <input type="checkbox" id="show-accepted" />
-          <span>Show accepted quests</span>
-        </label>
-      </div>
-    </section>
+    </main>
+  </div>
 
-    <p id="result-summary" class="result-summary" role="status"></p>
-    <section id="quest-list" class="quest-grid" aria-live="polite"></section>
-
-    <div id="empty-state" class="empty-state hidden">
-      <p class="empty-icon">🗺️</p>
-      <p class="empty-title">No sidequests in range</p>
-      <p class="empty-hint">Widen your search radius or be the first to post a quest in your area.</p>
-    </div>
-  </main>
-
-  <dialog id="post-modal" class="modal">
+  <dialog id="post-modal" class="sheet">
     <form id="post-form" method="dialog">
-      <h2>Post a sidequest</h2>
-      <p class="modal-hint">Describe the task, what you'll pay, and where it is. Adventurers nearby will find it.</p>
-
-      <label>Title
-        <input name="title" type="text" maxlength="120" required placeholder="e.g. Garden cleanup before summer party" />
-      </label>
-
-      <label>Description
-        <textarea name="description" maxlength="2000" rows="4" required
-          placeholder="What needs doing? Tools provided? Anything to bring?"></textarea>
-      </label>
-
-      <div class="form-row">
-        <label>Reward (€)
-          <input name="pay" type="number" min="0" max="100000" step="0.5" required placeholder="60" />
-        </label>
-        <label>Time required
-          <input name="duration" type="text" maxlength="60" required placeholder="~3 hours" />
-        </label>
+      <div class="sheet-header">
+        <button type="button" id="cancel-post" class="text-btn">Cancel</button>
+        <span class="sheet-title">New Sidequest</span>
+        <button type="submit" class="text-btn text-btn-bold">Post</button>
       </div>
 
-      <div class="form-row">
-        <label>Category
-          <select name="category">
-            <option>Garden</option>
-            <option>Pets</option>
-            <option>Moving</option>
-            <option>Errands</option>
-            <option>Repairs</option>
-            <option>Tech</option>
-            <option selected>Other</option>
-          </select>
-        </label>
-        <label>Complete by (optional)
-          <input name="completeBy" type="date" />
-        </label>
-      </div>
+      <div class="sheet-body">
+        <div class="field-group">
+          <input name="title" type="text" maxlength="120" required placeholder="What needs doing?" />
+          <textarea name="description" maxlength="2000" rows="3" required
+            placeholder="Details — tools provided, anything to bring…"></textarea>
+        </div>
 
-      <label>Where (shown on the quest card)
-        <input name="locationName" type="text" maxlength="120" required placeholder="e.g. Prenzlauer Berg, Berlin" />
-      </label>
+        <div class="field-group">
+          <div class="field-split">
+            <label class="field">
+              <span>Reward (€)</span>
+              <input name="pay" type="number" min="0" max="100000" step="0.5" required placeholder="60" inputmode="decimal" />
+            </label>
+            <label class="field">
+              <span>Time needed</span>
+              <input name="duration" type="text" maxlength="60" required placeholder="~3 hours" />
+            </label>
+          </div>
+          <div class="field-split">
+            <label class="field">
+              <span>Category</span>
+              <div class="select-wrap select-wrap-fill">
+                <select name="category">
+                  <option>Garden</option>
+                  <option>Pets</option>
+                  <option>Moving</option>
+                  <option>Errands</option>
+                  <option>Repairs</option>
+                  <option>Tech</option>
+                  <option selected>Other</option>
+                </select>
+              </div>
+            </label>
+            <label class="field">
+              <span>Complete by</span>
+              <input name="completeBy" type="date" />
+            </label>
+          </div>
+        </div>
 
-      <div class="form-row coords-row">
-        <label>Latitude
-          <input name="lat" type="number" step="any" min="-90" max="90" required />
-        </label>
-        <label>Longitude
-          <input name="lng" type="number" step="any" min="-180" max="180" required />
-        </label>
-        <button type="button" id="fill-my-coords" class="btn btn-ghost btn-small">📍 Use my location</button>
-      </div>
+        <div class="field-group">
+          <label class="field">
+            <span>Place shown on the card</span>
+            <input name="locationName" type="text" maxlength="120" required placeholder="e.g. Prenzlauer Berg, Berlin" />
+          </label>
+          <div class="field-split coords-split">
+            <label class="field">
+              <span>Latitude</span>
+              <input name="lat" type="number" step="any" min="-90" max="90" required inputmode="decimal" />
+            </label>
+            <label class="field">
+              <span>Longitude</span>
+              <input name="lng" type="number" step="any" min="-180" max="180" required inputmode="decimal" />
+            </label>
+          </div>
+          <button type="button" id="fill-my-coords" class="text-btn coords-btn">Use my location</button>
+        </div>
 
-      <label>Your name
-        <input name="postedBy" type="text" maxlength="60" required placeholder="How should helpers address you?" />
-      </label>
+        <div class="field-group">
+          <label class="field">
+            <span>Your name</span>
+            <input name="postedBy" type="text" maxlength="60" required placeholder="Shown to helpers" />
+          </label>
+        </div>
 
-      <p id="form-error" class="form-error hidden"></p>
-
-      <div class="modal-actions">
-        <button type="button" id="cancel-post" class="btn btn-ghost">Cancel</button>
-        <button type="submit" class="btn btn-primary">Publish quest</button>
+        <p id="form-error" class="form-error hidden"></p>
       </div>
     </form>
   </dialog>
 
   <template id="quest-card-template">
     <article class="quest-card">
-      <div class="quest-card-head">
+      <div class="quest-head">
         <span class="category-badge"></span>
         <span class="distance-badge"></span>
       </div>
       <h3 class="quest-title"></h3>
       <p class="quest-desc"></p>
-      <dl class="quest-meta">
-        <div class="meta-item meta-pay"><dt>Reward</dt><dd class="quest-pay"></dd></div>
-        <div class="meta-item"><dt>Time</dt><dd class="quest-duration"></dd></div>
-        <div class="meta-item"><dt>By when</dt><dd class="quest-deadline"></dd></div>
-      </dl>
+      <div class="quest-meta">
+        <span class="quest-pay"></span>
+        <span class="meta-sep" aria-hidden="true">·</span>
+        <span class="quest-duration"></span>
+        <span class="meta-sep" aria-hidden="true">·</span>
+        <span class="quest-deadline"></span>
+      </div>
       <div class="quest-footer">
         <div class="quest-poster">
           <span class="quest-location"></span>
           <span class="quest-byline"></span>
         </div>
-        <button class="btn btn-accept">Accept quest</button>
+        <button class="btn-accept">Accept</button>
       </div>
     </article>
   </template>
