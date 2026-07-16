@@ -4,6 +4,23 @@ const DEFAULT_LOCATION = { lat: 52.52, lng: 13.405, label: 'Berlin Mitte (demo)'
 const LOCATION_KEY = 'sidequest.location';
 const NAME_KEY = 'sidequest.name';
 
+const HERO_EYEBROWS = {
+  distance: 'Closest to you',
+  pay: 'Top reward',
+  newest: 'Just posted',
+};
+
+// SF-symbol-style glyphs for the category tiles.
+const CATEGORY_ICONS = {
+  Garden: '<path d="M6 18C6 10.5 11 5.5 19 5c.5 8-4.5 13-13 13z"/><path d="M6 18c2.5-5 6-8.5 10-10.5"/>',
+  Pets: '<circle cx="7.5" cy="8.5" r="1.7"/><circle cx="12" cy="7" r="1.7"/><circle cx="16.5" cy="8.5" r="1.7"/><path d="M12 11.5c2.9 0 5.2 2 5.2 4.3 0 1.4-1.1 2.4-2.4 2.4-1 0-1.9-.6-2.8-.6s-1.8.6-2.8.6c-1.3 0-2.4-1-2.4-2.4 0-2.3 2.3-4.3 5.2-4.3z"/>',
+  Moving: '<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4"/><path d="M12 12v8"/>',
+  Errands: '<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  Repairs: '<circle cx="12" cy="12" r="3.2"/><path d="M12 4v2.5M12 17.5V20M4 12h2.5M17.5 12H20M6.6 6.6l1.7 1.7M15.7 15.7l1.7 1.7M17.4 6.6l-1.7 1.7M8.3 15.7l-1.7 1.7"/>',
+  Tech: '<rect x="4.5" y="5.5" width="15" height="10" rx="1.6"/><path d="M3 19h18"/>',
+  Other: '<path d="M12 4l1.8 5.2L19 11l-5.2 1.8L12 18l-1.8-5.2L5 11l5.2-1.8z"/>',
+};
+
 const state = {
   location: loadLocation(),
   radius: '10', // km, or 'all'
@@ -60,7 +77,7 @@ function formatPay(pay) {
 
 function formatDeadline(completeBy) {
   if (!completeBy) return 'Flexible';
-  return new Date(completeBy + 'T00:00:00').toLocaleDateString(undefined, {
+  return 'by ' + new Date(completeBy + 'T00:00:00').toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'short',
   });
@@ -73,41 +90,95 @@ function formatPostedAt(createdAt) {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-function renderQuests(quests) {
+function categoryIcon(category) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.innerHTML = CATEGORY_ICONS[category] || CATEGORY_ICONS.Other;
+  return svg;
+}
+
+function renderHero(quest) {
+  const slot = $('#hero-slot');
+  slot.replaceChildren();
+  if (!quest) return;
+
+  const card = $('#hero-template').content.cloneNode(true);
+  const article = card.querySelector('.hero-card');
+  article.dataset.cat = quest.category;
+
+  card.querySelector('.hero-eyebrow').textContent = HERO_EYEBROWS[state.sort];
+  card.querySelector('.hero-distance').textContent =
+    quest.distanceKm != null ? `${quest.distanceKm} km away` : quest.category;
+  card.querySelector('.hero-title').textContent = quest.title;
+  card.querySelector('.hero-desc').textContent = quest.description;
+  card.querySelector('.hero-location').textContent = quest.locationName;
+  card.querySelector('.hero-byline').textContent =
+    `${quest.postedBy} · ${quest.duration} · ${formatDeadline(quest.completeBy)}`;
+
+  const button = card.querySelector('.hero-accept');
+  if (quest.status === 'open') {
+    button.textContent = `Accept · ${formatPay(quest.pay)}`;
+    button.addEventListener('click', () => acceptQuest(quest, button));
+  } else {
+    button.textContent = `Taken by ${quest.acceptedBy || 'someone'}`;
+    button.disabled = true;
+  }
+
+  slot.appendChild(card);
+}
+
+function renderCells(quests) {
   const list = $('#quest-list');
   const template = $('#quest-card-template');
   list.replaceChildren();
 
   for (const quest of quests) {
     const card = template.content.cloneNode(true);
-    const article = card.querySelector('.quest-card');
-    if (quest.status !== 'open') article.classList.add('accepted');
+    if (quest.status !== 'open') card.querySelector('.cell').classList.add('accepted');
 
-    const badge = card.querySelector('.category-badge');
-    badge.textContent = quest.category;
-    badge.dataset.cat = quest.category;
-    card.querySelector('.distance-badge').textContent =
-      quest.distanceKm != null ? `${quest.distanceKm} km away` : '';
+    const tile = card.querySelector('.cat-tile');
+    tile.dataset.cat = quest.category;
+    tile.appendChild(categoryIcon(quest.category));
+
     card.querySelector('.quest-title').textContent = quest.title;
-    card.querySelector('.quest-desc').textContent = quest.description;
-    card.querySelector('.quest-pay').textContent = formatPay(quest.pay);
+    card.querySelector('.quest-category').textContent = quest.category;
+    card.querySelector('.distance-badge').textContent =
+      quest.distanceKm != null ? `${quest.distanceKm} km` : '—';
     card.querySelector('.quest-duration').textContent = quest.duration;
     card.querySelector('.quest-deadline').textContent = formatDeadline(quest.completeBy);
-    card.querySelector('.quest-location').textContent = quest.locationName;
+    card.querySelector('.quest-desc').textContent = quest.description;
     card.querySelector('.quest-byline').textContent =
-      `${quest.postedBy} · ${formatPostedAt(quest.createdAt)}`;
+      `${quest.locationName} · ${quest.postedBy} · ${formatPostedAt(quest.createdAt)}`;
 
-    const acceptBtn = card.querySelector('.btn-accept');
+    const button = card.querySelector('.btn-accept');
+    const caption = card.querySelector('.action-caption');
     if (quest.status === 'open') {
-      acceptBtn.addEventListener('click', () => acceptQuest(quest, acceptBtn));
+      button.textContent = formatPay(quest.pay);
+      caption.textContent = 'Accept';
+      button.addEventListener('click', () => acceptQuest(quest, button));
     } else {
-      acceptBtn.disabled = true;
-      acceptBtn.textContent = `Taken by ${quest.acceptedBy || 'someone'}`;
+      button.textContent = 'Taken';
+      button.disabled = true;
+      caption.textContent = `by ${quest.acceptedBy || 'someone'}`;
     }
 
     list.appendChild(card);
   }
+}
 
+function renderQuests(quests) {
+  const [hero, ...rest] = quests;
+
+  renderHero(hero);
+  renderCells(rest);
+
+  $('#list-title').textContent = hero ? 'More quests' : 'All quests';
+  document.querySelector('.list-head').classList.toggle('hidden', quests.length === 0 || rest.length === 0);
   $('#empty-state').classList.toggle('hidden', quests.length > 0);
 
   const radiusText = state.radius === 'all' ? 'any distance' : `${state.radius} km`;
@@ -167,13 +238,25 @@ function useGeolocation(onCoords, button) {
   );
 }
 
-// ---- Wire up controls ----
+// ---- Chrome ----
+
+$('#date-eyebrow').textContent = new Date().toLocaleDateString(undefined, {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+});
+
+window.addEventListener('scroll', () => {
+  $('#navbar-title').classList.toggle('show', window.scrollY > 90);
+}, { passive: true });
+
+// ---- Controls ----
 
 $('#radius-chips').addEventListener('click', (e) => {
-  const chip = e.target.closest('.seg');
+  const chip = e.target.closest('.chip');
   if (!chip) return;
-  document.querySelectorAll('#radius-chips .seg').forEach((c) => c.classList.remove('seg-active'));
-  chip.classList.add('seg-active');
+  document.querySelectorAll('#radius-chips .chip').forEach((c) => c.classList.remove('chip-active'));
+  chip.classList.add('chip-active');
   state.radius = chip.dataset.radius;
   refresh();
 });
@@ -224,7 +307,7 @@ $('#save-location').addEventListener('click', () => {
   refresh();
 });
 
-// ---- Post modal ----
+// ---- Post sheet ----
 
 const modal = $('#post-modal');
 const form = $('#post-form');
