@@ -15,10 +15,18 @@ const MIME_TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
 };
+
+// HTML is always revalidated so deploys show up immediately; assets get an hour.
+function cacheControlFor(ext) {
+  if (ext === '.html') return 'no-cache';
+  if (ext === '.png' || ext === '.svg' || ext === '.ico') return 'public, max-age=86400';
+  return 'public, max-age=3600';
+}
 
 const CATEGORIES = ['Garden', 'Pets', 'Moving', 'Errands', 'Repairs', 'Tech', 'Other'];
 const MAX_TEXT = { title: 120, description: 2000, locationName: 120, postedBy: 60 };
@@ -28,6 +36,8 @@ function sendJson(res, status, body) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(payload),
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
   });
   res.end(payload);
 }
@@ -172,8 +182,14 @@ function serveStatic(req, res, pathname) {
   }
   fs.readFile(filePath, (err, content) => {
     if (err) return sendJson(res, 404, { error: 'not found' });
-    const type = MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': type, 'Content-Length': content.length });
+    const ext = path.extname(filePath).toLowerCase();
+    const type = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, {
+      'Content-Type': type,
+      'Content-Length': content.length,
+      'Cache-Control': cacheControlFor(ext),
+      'X-Content-Type-Options': 'nosniff',
+    });
     res.end(content);
   });
 }
